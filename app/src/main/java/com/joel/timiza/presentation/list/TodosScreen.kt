@@ -41,6 +41,7 @@ fun TodosScreen(
                 TimizaEvents.PopBackStack -> {
                     popBackStack()
                 }
+                is TimizaEvents.ShowSnackbar -> TODO()
             }
         }
     }

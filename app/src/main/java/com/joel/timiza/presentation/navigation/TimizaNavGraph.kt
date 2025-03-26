@@ -1,12 +1,16 @@
 package com.joel.timiza.presentation.navigation
 
+import android.app.Activity
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -34,8 +38,12 @@ import kotlinx.serialization.Serializable
 fun TimizaNavGraph(
     navHostController: NavHostController,
     updateBottomBarState: (Boolean) -> Unit,
-    onSignInClick: () -> Unit
+    onSignInClick: () -> Unit,
+    activity: Activity
 ){
+
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     NavHost(
         navController = navHostController,
@@ -46,20 +54,26 @@ fun TimizaNavGraph(
             updateBottomBarState(false)
             SignInScreen(
                 onNavigate = {
-                    navHostController.navigate(it.route) },
+                    navHostController.navigate(it.route)
+                },
                 popBackStack = {
                     navHostController.popBackStack()
-                }
+                },
+                scope = scope,
+                snackbarHostState = snackbarHostState, activity = activity
             )
         }
         composable<Destinations.SignUp> {
             updateBottomBarState(false)
             SignUpScreen(
                 onNavigate = {
-                    navHostController.navigate(it.route) },
+                    navHostController.navigate(it.route)
+                },
                 popBackStack = {
                     navHostController.popBackStack()
-                }
+                },
+                scope = scope,
+                snackbarHostState = snackbarHostState, activity = activity
             )
         }
         composable<Destinations.TodoList> {

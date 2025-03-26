@@ -1,6 +1,7 @@
 package com.joel.timiza.data.auth
 
 import android.accounts.AuthenticatorException
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.credentials.CredentialManager
@@ -9,6 +10,7 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.joel.timiza.R
 import com.joel.timiza.domain.models.User
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
@@ -24,7 +26,6 @@ import javax.inject.Inject
 
 class AuthServiceImpl @Inject constructor(
     private val supabase : SupabaseClient,
-    private val context: Context
 ) : AuthService {
 
 
@@ -51,8 +52,6 @@ class AuthServiceImpl @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
 
-
-
     override suspend fun register(
         emailValue: String,
         passwordValue: String,
@@ -76,20 +75,20 @@ class AuthServiceImpl @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun googleSignIn(): Flow<AuthResponse> = flow{
+    override suspend fun googleSignIn(activity: Activity): Flow<AuthResponse> = flow{
         val googleIdOption : GetSignInWithGoogleOption = GetSignInWithGoogleOption
-            .Builder(context.getString(R.string.web_client_id))
+            .Builder(activity.getString(R.string.web_client_id))
             .build()
 
         val request = GetCredentialRequest.Builder()
             .addCredentialOption(googleIdOption)
             .build()
 
-        val credentialManager = CredentialManager.create(context)
+        val credentialManager = CredentialManager.create(activity)
 
         try {
             val result = credentialManager.getCredential(
-                context = context,
+                context = activity,
                 request = request
             )
 

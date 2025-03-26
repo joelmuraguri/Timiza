@@ -1,6 +1,6 @@
 package com.joel.timiza.presentation.auth
 
-import android.util.Log
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,21 +16,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -38,22 +36,24 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.joel.timiza.ui.theme.TimizaTheme
 import com.joel.timiza.ui.theme.black
 import com.joel.timiza.ui.theme.darkGray
-import com.joel.timiza.utils.AuthManager
-import com.joel.timiza.utils.AuthResponse
 import com.joel.timiza.utils.Gradient
 import com.joel.timiza.utils.TimizaEvents
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun SignInScreen(
-    authViewModel: AuthViewModel = viewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     onNavigate : (TimizaEvents.Navigate) -> Unit,
     popBackStack : () -> Unit,
+    scope: CoroutineScope,
+    snackbarHostState : SnackbarHostState,
+    activity: Activity
+
 ) {
 
     LaunchedEffect(key1 = true){
@@ -65,204 +65,197 @@ fun SignInScreen(
                 TimizaEvents.PopBackStack -> {
                     popBackStack()
                 }
+                is TimizaEvents.ShowSnackbar -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(timizaEvents.message)
+                    }
+                }
             }
         }
     }
 
-    var emailValue by remember {
-        mutableStateOf("")
-    }
+    val state = authViewModel.state.value
 
-    var passwordValue by remember {
-        mutableStateOf("")
-    }
     val scrollState = rememberScrollState()
 
-    val context = LocalContext.current
-    val authManager = remember {
-        AuthManager(context)
-    }
-    val coroutineScope = rememberCoroutineScope()
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(black),
-        contentAlignment = Alignment.TopCenter
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
     ) {
-        Gradient()
-
-        Column(
+        Box(
             modifier = Modifier
-                .verticalScroll(scrollState)
+                .padding(it)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
-                .padding(top = 110.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(black),
+            contentAlignment = Alignment.TopCenter
         ) {
-            SignInHeader()
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            GoogleSignInButton(
-                onClick = {
-                    authViewModel.onEvents(AuthEvents.OnNavHome)
-//                    authManager.loginGoogleUser()
-//                        .onEach { result ->
-//                            if (result is AuthResponse.Success) {
-//                                Log.d("auth", "Google Success")
-//                            } else {
-//                                Log.e("auth", "Google Failed")
-//                            }
-//                        }
-//                        .launchIn(coroutineScope)
-                }
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 30.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1.dp)
-                        .background(Color.White.copy(alpha = 0.2f))
-                )
-
-                Text(
-                    text = "Or",
-                    color = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(horizontal = 10.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1.dp)
-                        .background(Color.White.copy(alpha = 0.2f))
-                )
-            }
+            Gradient()
 
             Column(
-                horizontalAlignment = Alignment.Start
+                modifier = Modifier
+                    .verticalScroll(scrollState)
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 110.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Email",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
+                SignInHeader()
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
-                TextField(
-                    value = emailValue,
-                    onValueChange = { newValue ->
-                        emailValue = newValue
-                    },
-                    placeholder = {
-                        Text(
-                            text = "john.doe@example.com",
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        focusedContainerColor = darkGray,
-                        unfocusedContainerColor = darkGray
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Column(
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = "Password",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                TextField(
-                    value = passwordValue,
-                    onValueChange = { newValue ->
-                        passwordValue = newValue
-                    },
-                    placeholder = {
-                        Text(
-                            text = "Enter your password",
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        focusedContainerColor = darkGray,
-                        unfocusedContainerColor = darkGray
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(35.dp))
-
-            Button(
-                onClick = {
-                    authViewModel.onEvents(AuthEvents.OnNavHome)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Sign In",
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(25.dp))
-
-            TextButton(
-                onClick = {
-                    authViewModel.onEvents(AuthEvents.OnNavSignUp)
-                }
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(
-                            style = SpanStyle(
-                                fontWeight = FontWeight.Light,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
-                        ) {
-                            append("Don't have an account? ")
-
-                        }
-
-                        withStyle(
-                            style = SpanStyle(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        ) {
-                            append("Register")
-                        }
+                GoogleSignInButton(
+                    onClick = {
+                        authViewModel.onEvents(AuthEvents.OnGoogleSignIn(activity))
                     }
                 )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 30.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(1.dp)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    )
+
+                    Text(
+                        text = "Or",
+                        color = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(1.dp)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "Email",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    TextField(
+                        value = state.email,
+                        onValueChange = { newValue ->
+                            authViewModel.onEvents(AuthEvents.OnEmailChange(newValue))
+                        },
+                        placeholder = {
+                            Text(
+                                text = "john.doe@example.com",
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            focusedContainerColor = darkGray,
+                            unfocusedContainerColor = darkGray
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "Password",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    TextField(
+                        value = state.password,
+                        onValueChange = { newValue ->
+                            authViewModel.onEvents(AuthEvents.OnPasswordChange(newValue))
+                        },
+                        placeholder = {
+                            Text(
+                                text = "Enter your password",
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            focusedContainerColor = darkGray,
+                            unfocusedContainerColor = darkGray
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(35.dp))
+
+                Button(
+                    onClick = {
+                        authViewModel.onEvents(AuthEvents.OnSignIn)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Sign In",
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(25.dp))
+
+                TextButton(
+                    onClick = {
+                        authViewModel.onEvents(AuthEvents.OnNavSignUp)
+                    }
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    fontWeight = FontWeight.Light,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            ) {
+                                append("Don't have an account? ")
+
+                            }
+
+                            withStyle(
+                                style = SpanStyle(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            ) {
+                                append("Register")
+                            }
+                        }
+                    )
+                }
             }
         }
     }
+
 }
 
 
@@ -290,9 +283,12 @@ private fun SignInHeader() {
 private fun RegisterPreview() {
     TimizaTheme {
         SignUpScreen(
+            onNavigate = {},
+            popBackStack = {},
+            scope = rememberCoroutineScope(),
+            snackbarHostState = TODO(),
             authViewModel = TODO(),
-            onNavigate = TODO(),
-            popBackStack = TODO()
+            activity = TODO()
         )
     }
 }
