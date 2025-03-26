@@ -1,6 +1,7 @@
 package com.joel.timiza.presentation.navigation
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
@@ -8,6 +9,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -16,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -26,6 +30,7 @@ import com.joel.timiza.R
 import com.joel.timiza.domain.models.Status
 import com.joel.timiza.domain.models.Todo
 import com.joel.timiza.domain.models.User
+import com.joel.timiza.presentation.auth.AuthViewModel
 import com.joel.timiza.presentation.auth.SignInScreen
 import com.joel.timiza.presentation.auth.SignUpScreen
 import com.joel.timiza.presentation.edit.EditTodosScreen
@@ -38,16 +43,20 @@ import kotlinx.serialization.Serializable
 fun TimizaNavGraph(
     navHostController: NavHostController,
     updateBottomBarState: (Boolean) -> Unit,
-    onSignInClick: () -> Unit,
-    activity: Activity
+    activity: Activity,
+    authViewModel: AuthViewModel = hiltViewModel()
 ){
-
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val isUserAuthenticated by authViewModel.isUserAuthenticated.collectAsState()
+    val startDestination = if (isUserAuthenticated) Destinations.TodoList else Destinations.SignIn
+
+    Log.d("AUTH-VIEWMODEL" , "--------------> has user $isUserAuthenticated")
+    Log.d("TimizaNavGraph" , "--------------> startDestination $startDestination")
 
     NavHost(
         navController = navHostController,
-        startDestination = Destinations.SignIn
+        startDestination = startDestination
     ){
         
         composable<Destinations.SignIn> {

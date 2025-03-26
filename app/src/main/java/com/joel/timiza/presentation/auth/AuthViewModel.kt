@@ -13,6 +13,8 @@ import com.joel.timiza.utils.TimizaEvents
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,6 +29,13 @@ class AuthViewModel @Inject constructor(
 
     private val _uiEvents = Channel<TimizaEvents>()
     val uiEvents = _uiEvents.receiveAsFlow()
+
+    private val _isUserAuthenticated = MutableStateFlow(service.hasUser)
+    val isUserAuthenticated: StateFlow<Boolean> = _isUserAuthenticated
+
+    private fun checkAuthStatus() {
+        _isUserAuthenticated.value = service.hasUser
+    }
 
     fun onEvents(events: AuthEvents){
         when(events){
@@ -57,6 +66,7 @@ class AuthViewModel @Inject constructor(
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Google Sign In Failed: ${it.message}"))
                             }
                             AuthResponse.Success -> {
+                                checkAuthStatus()
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign In Successful!"))
                                 delay(2000)
                                 _uiEvents.send(TimizaEvents.Navigate(Destinations.TodoList))
@@ -77,6 +87,7 @@ class AuthViewModel @Inject constructor(
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign-In Failed: ${it.message}"))
                             }
                             AuthResponse.Success -> {
+                                checkAuthStatus()
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign In Successful!"))
                                 delay(2000)
                                 _uiEvents.send(TimizaEvents.Navigate(Destinations.TodoList))
@@ -98,6 +109,7 @@ class AuthViewModel @Inject constructor(
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign-Up Failed: ${it.message}"))
                             }
                             AuthResponse.Success -> {
+                                checkAuthStatus()
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign Up Successful!"))
                                 delay(2000)
                                 _uiEvents.send(TimizaEvents.Navigate(Destinations.TodoList))

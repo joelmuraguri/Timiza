@@ -33,6 +33,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.joel.timiza.presentation.design.components.Gradient
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,7 +41,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.joel.timiza.ui.theme.TimizaTheme
 import com.joel.timiza.ui.theme.black
 import com.joel.timiza.ui.theme.darkGray
-import com.joel.timiza.utils.Gradient
 import com.joel.timiza.utils.TimizaEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

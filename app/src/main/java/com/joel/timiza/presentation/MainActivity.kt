@@ -48,9 +48,6 @@ class MainActivity : ComponentActivity() {
                         TimizaNavGraph (
                             navHostController = navController,
                             updateBottomBarState = { bottomBarState.value = it },
-                            onSignInClick = {
-
-                            },
                             activity = activity!!
                         )
                     }
