@@ -2,12 +2,14 @@ package com.joel.timiza.presentation.auth
 
 import android.app.Activity
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joel.timiza.data.auth.AuthResponse
 import com.joel.timiza.data.auth.AuthService
+import com.joel.timiza.data.datastore.SessionService
 import com.joel.timiza.presentation.navigation.Destinations
 import com.joel.timiza.utils.TimizaEvents
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +23,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val service : AuthService
+    private val authService : AuthService,
+    private val sessionService: SessionService
 ) : ViewModel() {
 
     private val _state = mutableStateOf(AuthScreenState())
@@ -30,11 +33,29 @@ class AuthViewModel @Inject constructor(
     private val _uiEvents = Channel<TimizaEvents>()
     val uiEvents = _uiEvents.receiveAsFlow()
 
-    private val _isUserAuthenticated = MutableStateFlow(service.hasUser)
+    private val _isUserAuthenticated = MutableStateFlow(authService.hasUser)
     val isUserAuthenticated: StateFlow<Boolean> = _isUserAuthenticated
 
+    private val _isLoading: MutableState<Boolean> = mutableStateOf(true)
+    val isLoading: State<Boolean> = _isLoading
+
+    private val _startDestination: MutableState<Destinations> = mutableStateOf(Destinations.SignIn)
+    val startDestination: State<Destinations> = _startDestination
+
+    init {
+        viewModelScope.launch {
+            sessionService.readAuthStatus().collect { completed ->
+                if (completed) {
+                    _startDestination.value = Destinations.TodoList
+                } else {
+                    _startDestination.value = Destinations.SignIn
+                }
+            }
+        }
+    }
+
     private fun checkAuthStatus() {
-        _isUserAuthenticated.value = service.hasUser
+        _isUserAuthenticated.value = authService.hasUser
     }
 
     fun onEvents(events: AuthEvents){
@@ -59,7 +80,7 @@ class AuthViewModel @Inject constructor(
             }
             is AuthEvents.OnGoogleSignIn -> {
                 viewModelScope.launch {
-                    service.googleSignIn(events.activity).collect{
+                    authService.googleSignIn(events.activity).collect{
                         when(it){
                             is AuthResponse.Error -> {
                                 Log.e(AUTH_VIEWMODEL_TAG, "Google Sign In Failed: ${it.message}")
@@ -70,14 +91,16 @@ class AuthViewModel @Inject constructor(
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign In Successful!"))
                                 delay(2000)
                                 _uiEvents.send(TimizaEvents.Navigate(Destinations.TodoList))
+                                sessionService.saveOnAuthStatus(true)
                             }
                         }
                     }
+                    _isLoading.value = false
                 }
             }
             AuthEvents.OnSignIn -> {
                 viewModelScope.launch {
-                    service.signIn(
+                    authService.signIn(
                         emailValue = _state.value.email,
                         passwordValue = _state.value.password
                     ).collect{
@@ -91,14 +114,16 @@ class AuthViewModel @Inject constructor(
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign In Successful!"))
                                 delay(2000)
                                 _uiEvents.send(TimizaEvents.Navigate(Destinations.TodoList))
+                                sessionService.saveOnAuthStatus(true)
                             }
                         }
                     }
+                    _isLoading.value = false
                 }
             }
             AuthEvents.OnSignUp -> {
                 viewModelScope.launch {
-                    service.register(
+                    authService.register(
                         emailValue = _state.value.email,
                         passwordValue = _state.value.password,
                         name = _state.value.name
@@ -113,9 +138,11 @@ class AuthViewModel @Inject constructor(
                                 _uiEvents.send(TimizaEvents.ShowSnackbar("Sign Up Successful!"))
                                 delay(2000)
                                 _uiEvents.send(TimizaEvents.Navigate(Destinations.TodoList))
+                                sessionService.saveOnAuthStatus(true)
                             }
                         }
                     }
+                    _isLoading.value = false
                 }
             }
 

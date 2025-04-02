@@ -101,4 +101,15 @@ dependencies {
 
     //navigation
     implementation(libs.androidx.navigation.compose)
+
+    //Coil
+    implementation("io.coil-kt:coil-compose:2.2.2")
+
+    //DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.4")
+    implementation(libs.androidx.datastore.core.android)
+
+    //splash
+    implementation("androidx.core:core-splashscreen:1.0.0-beta01")
+
 }
