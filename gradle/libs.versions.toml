@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.0-rc02"
+agp = "8.9.1"
 credentials = "1.5.0"
 googleid = "1.1.1"
 kotlin = "2.1.10"
@@ -10,16 +10,15 @@ espressoCore = "3.6.1"
 ktorClientAndroid = "3.1.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
-composeBom = "2025.03.00"
+composeBom = "2025.03.01"
 playServicesAuth = "21.3.0"
-hilt = "2.51.1"
+hilt = "2.55"
 ksp = "2.1.10-1.0.29"
 kotlin-coroutines = "1.10.1"
 hilt-navigation-compose = "1.2.0"
 androidxNavigation = "2.8.9"
-composeMaterial3 = "1.0.0-alpha34"
-
-
+composeMaterial3 = "1.0.0-alpha35"
+datastoreCoreAndroid = "1.1.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -48,8 +47,7 @@ kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutine
 kotlin-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlin-coroutines" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
 androidx-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "composeMaterial3" }
-
-
+androidx-datastore-core-android = { group = "androidx.datastore", name = "datastore-core-android", version.ref = "datastoreCoreAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

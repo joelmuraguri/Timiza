@@ -2,15 +2,14 @@ package com.joel.timiza.data.auth
 
 import android.accounts.AuthenticatorException
 import android.app.Activity
-import android.content.Context
 import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.joel.timiza.R
+import com.joel.timiza.data.datastore.SessionService
 import com.joel.timiza.domain.models.User
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
@@ -22,10 +21,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 
 class AuthServiceImpl @Inject constructor(
     private val supabase : SupabaseClient,
+    private val sessionService: SessionService
 ) : AuthService {
 
 
@@ -40,11 +42,17 @@ class AuthServiceImpl @Inject constructor(
         val userData = session?.user
 
         if (userData != null) {
+
+            val name = (userData.userMetadata?.get("full_name")?.jsonPrimitive?.contentOrNull) ?: "Unknown"
+            val picture = (userData.userMetadata?.get("picture")?.jsonPrimitive?.contentOrNull) ?: ""
+
             val user = User(
                 uid = userData.id,
                 email = userData.email ?: "",
-                name = userData.userMetadata ?.get("full_name") as? String ?: "Unknown"
+                name = name,
+                profileUrl = picture
             )
+            sessionService.saveUserData(user)
             emit(user)
         } else {
             emit(User(uid = "", email = "", name = ""))
@@ -63,6 +71,9 @@ class AuthServiceImpl @Inject constructor(
                 password = passwordValue
             }
 
+            currentUser.collect { user ->
+                sessionService.saveUserData(user)
+            }
             emit(AuthResponse.Success)
         } catch (e: ParseException) {
             emit(AuthResponse.Error(e.localizedMessage))
@@ -96,10 +107,15 @@ class AuthServiceImpl @Inject constructor(
                 .createFrom(result.credential.data)
 
             val googleIdToken = googleIdTokenCredential.idToken
+            Log.d("GO0GLE ID :" , "--> $googleIdToken")
 
             supabase.auth.signInWith(IDToken) {
                 idToken = googleIdToken
                 provider = Google
+            }
+
+            currentUser.collect { user ->
+                sessionService.saveUserData(user)
             }
 
             emit(AuthResponse.Success)
@@ -131,6 +147,11 @@ class AuthServiceImpl @Inject constructor(
                 email = emailValue
                 password = passwordValue
             }
+
+            currentUser.collect { user ->
+                sessionService.saveUserData(user)
+            }
+
             emit(AuthResponse.Success)
         } catch (e: ParseException) {
             emit(AuthResponse.Error(e.localizedMessage))
